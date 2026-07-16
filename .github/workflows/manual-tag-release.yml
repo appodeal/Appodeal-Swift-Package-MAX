@@ -1,0 +1,91 @@
+name: Manual tag SPM release
+
+on:
+  workflow_dispatch:
+    inputs:
+      version:
+        description: 'Version to tag (leave empty to extract from Package.swift)'
+        required: false
+        type: string
+
+jobs:
+  create-tag:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Determine version
+        id: get_version
+        run: |
+          if [ -n "${{ github.event.inputs.version }}" ]; then
+            VERSION="${{ github.event.inputs.version }}"
+            echo "Using manually provided version: $VERSION"
+          else
+            # Extract version from Package.swift URL patterns
+            VERSION=$(grep -oE '/[0-9]+\.[0-9]+\.[0-9]+(\.[0-9]+)?(-[a-zA-Z0-9\.]+)?/' Package.swift | grep -v 'github.com' | head -1 | tr -d '/')
+            
+            if [ -z "$VERSION" ]; then
+              echo "❌ No version found in Package.swift and no version provided"
+              exit 1
+            fi
+            echo "Extracted version from Package.swift: $VERSION"
+          fi
+          
+          echo "version=$VERSION" >> $GITHUB_OUTPUT
+
+      - name: Check if tag exists
+        id: check_tag
+        run: |
+          if git rev-parse "refs/tags/${{ steps.get_version.outputs.version }}" >/dev/null 2>&1; then
+            echo "❌ Tag ${{ steps.get_version.outputs.version }} already exists"
+            exit 1
+          else
+            echo "✅ Tag ${{ steps.get_version.outputs.version }} does not exist, will create it"
+          fi
+
+      - name: Create and push tag
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          
+          VERSION="${{ steps.get_version.outputs.version }}"
+          
+          # Create annotated tag
+          git tag -a "$VERSION" -m "Release $VERSION
+
+          Manually created via workflow dispatch
+          Triggered by: @${{ github.actor }}
+          Commit: ${{ github.sha }}"
+          
+          # Push the tag
+          git push origin "$VERSION"
+          
+          echo "✅ Successfully created and pushed tag: $VERSION"
+
+      - name: Create release
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const version = '${{ steps.get_version.outputs.version }}';
+            
+            await github.rest.repos.createRelease({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              tag_name: version,
+              name: `Release ${version}`,
+              body: `## AppLovin MAX Adapter ${version}\n\n` +
+                    `### Installation\n\n` +
+                    `Add to your Package.swift:\n` +
+                    `\`\`\`swift\n` +
+                    `.package(url: "https://github.com/${context.repo.owner}/${context.repo.repo}.git", exact: "${version}")\n` +
+                    `\`\`\`\n\n` +
+                    `### What's Changed\n` +
+                    `See [Package.swift](https://github.com/${context.repo.owner}/${context.repo.repo}/blob/${version}/Package.swift) for dependencies.`,
+              draft: false,
+              prerelease: version.includes('-')
+            });
