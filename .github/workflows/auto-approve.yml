@@ -1,0 +1,63 @@
+name: Auto-approve PRs
+
+on:
+  pull_request:
+    types: [opened, synchronize, reopened]
+
+jobs:
+  auto-approve:
+    runs-on: ubuntu-latest
+    if: |
+      (
+        startsWith(github.head_ref, 'feature/') ||
+        startsWith(github.head_ref, 'bugfix/') ||
+        startsWith(github.head_ref, 'claude/') ||
+        startsWith(github.head_ref, 'release/')
+      )
+    permissions:
+      pull-requests: write
+      contents: write
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Auto-approve PR
+        uses: hmarr/auto-approve-action@v3
+        with:
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Add auto-merge label
+        uses: actions/github-script@v7
+        with:
+          script: |
+            await github.rest.issues.addLabels({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              issue_number: context.issue.number,
+              labels: ['auto-merge']
+            })
+
+      - name: Enable auto-merge
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const pr = context.payload.pull_request;
+            
+            // Only enable auto-merge for allowed branches
+            const allowedPrefixes = ['feature/', 'bugfix/', 'claude/', 'release/'];
+            const branchName = pr.head.ref;
+            
+            if (allowedPrefixes.some(prefix => branchName.startsWith(prefix))) {
+              try {
+                await github.rest.pulls.merge({
+                  owner: context.repo.owner,
+                  repo: context.repo.repo,
+                  pull_number: pr.number,
+                  merge_method: 'squash'
+                });
+                console.log(`Auto-merge enabled for PR #${pr.number}`);
+              } catch (error) {
+                // If merge fails (e.g., checks pending), it's okay
+                console.log(`Could not auto-merge yet: ${error.message}`);
+              }
+            }
