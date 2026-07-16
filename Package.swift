@@ -11,7 +11,7 @@ let package = Package(
             targets: ["AppodealAppLovinMAXAdapterWrapper"]),
     ],
     dependencies: [
-        .package(url: "https://github.com/appodeal/Appodeal-Swift-Package.git", from: "4.0.0"),
+        .package(url: "https://github.com/appodeal/Appodeal-Swift-Package.git", .upToNextMajor(from: "4.0.0-alpha.1")),
         .package(url: "https://github.com/AppLovin/AppLovin-MAX-Swift-Package.git", exact: "13.6.2"),
     ],
     targets: [
