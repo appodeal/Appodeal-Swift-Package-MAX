@@ -25,8 +25,8 @@ jobs:
         id: extract_version
         run: |
           # Extract version from Package.swift URL patterns
-          # Looking for patterns like /1.0.0/ in the binary target URL
-          VERSION=$(grep -oE '/[0-9]+\.[0-9]+\.[0-9]+(-[a-zA-Z0-9\.]+)?/' Package.swift | grep -v 'github.com' | head -1 | tr -d '/')
+          # Looking for patterns like /13.6.2.0/ in the binary target URL
+          VERSION=$(grep -oE '/[0-9]+\.[0-9]+\.[0-9]+(\.[0-9]+)?(-[a-zA-Z0-9\.]+)?/' Package.swift | grep -v 'github.com' | head -1 | tr -d '/')
           
           if [ -z "$VERSION" ]; then
             echo "❌ No version found in Package.swift"
