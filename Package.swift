@@ -12,14 +12,14 @@ let package = Package(
     ],
     dependencies: [
         .package(url: "https://github.com/appodeal/Appodeal-Swift-Package.git", from: "4.0.0"),
-        .package(url: "https://github.com/AppLovin/AppLovin-MAX-SDK-iOS.git", from: "13.0.0"),
+        .package(url: "https://github.com/AppLovin/AppLovin-MAX-Swift-Package.git", exact: "13.6.2"),
     ],
     targets: [
         .target(
             name: "AppodealAppLovinMAXAdapterWrapper",
             dependencies: [
                 .product(name: "AppodealSDK", package: "Appodeal-Swift-Package"),
-                .product(name: "AppLovinSDK", package: "AppLovin-MAX-SDK-iOS"),
+                .product(name: "AppLovinSDK", package: "AppLovin-MAX-Swift-Package"),
                 .target(name: "AppodealAppLovinMAXAdapter"),
             ],
             path: "Sources",
@@ -27,7 +27,7 @@ let package = Package(
         ),
         .binaryTarget(
             name: "AppodealAppLovinMAXAdapter",
-            url: "https://s3-us-west-1.amazonaws.com/appodeal-ios/Appodeal/SPM/AppodealAppLovinMAXAdapter/1.0.0/AppodealAppLovinMAXAdapter.xcframework.zip",
+            url: "https://s3-us-west-1.amazonaws.com/appodeal-ios/Appodeal/SPM/AppodealAppLovinMAXAdapter/13.6.2.0/AppodealAppLovinMAXAdapter.xcframework.zip",
             checksum: "PLACEHOLDER_CHECKSUM"
         ),
     ]
