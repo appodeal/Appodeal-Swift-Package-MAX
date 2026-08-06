@@ -18,7 +18,7 @@ let package = Package(
         .target(
             name: "AppodealAppLovinMAXAdapterWrapper",
             dependencies: [
-                .product(name: "Appodeal", package: "Appodeal-Swift-Package"),
+                .product(name: "AppodealSDK", package: "Appodeal-Swift-Package"),
                 .product(name: "AppLovinSDK", package: "AppLovin-MAX-Swift-Package"),
                 .target(name: "AppodealAppLovinMAXAdapter"),
             ],
